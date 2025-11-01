@@ -30,14 +30,13 @@ import { Roles } from "../common/decorators/roles";
 import { GetCurrentUser } from "../common/decorators/getCurrentUser";
 
 @ApiTags("Users")
-@ApiBearerAuth()
 @Controller("users")
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class UsersController {
-  constructor(private readonly usersService: UsersService) { }
-
+  constructor(private readonly usersService: UsersService) {}
 
   @Post()
+  @ApiBearerAuth()
   @Roles(UserRole.admin, UserRole.superadmin)
   @ApiOperation({
     summary: "Create a new user",
@@ -71,7 +70,6 @@ export class UsersController {
     return safeUser;
   }
 
-
   @Get()
   @Roles(UserRole.admin, UserRole.superadmin, UserRole.support)
   @ApiOperation({
@@ -79,6 +77,7 @@ export class UsersController {
     description:
       "Retrieves paginated list of users. You can search by name/email, filter by role or region.",
   })
+  @ApiBearerAuth()
   @ApiQuery({ name: "page", required: false, type: Number, example: 1 })
   @ApiQuery({ name: "limit", required: false, type: Number, example: 10 })
   @ApiQuery({ name: "search", required: false, type: String })
@@ -110,8 +109,8 @@ export class UsersController {
     );
   }
 
-
   @Get(":id")
+  @ApiBearerAuth()
   @Roles(UserRole.admin, UserRole.superadmin, UserRole.support)
   @ApiOperation({
     summary: "Get user by ID (safe response)",
@@ -136,17 +135,19 @@ export class UsersController {
     return safeUser;
   }
 
-
   @Patch(":id")
-  @Roles(UserRole.admin, UserRole.superadmin)
   @ApiOperation({
     summary: "Update user by ID",
-    description: "Updates specific user data based on the provided ID. Users cannot edit themselves through this endpoint - use /me endpoint instead.",
+    description:
+      "Updates specific user data based on the provided ID. Users cannot edit themselves through this endpoint - use /me endpoint instead.",
   })
   @ApiParam({ name: "id", type: Number, description: "User ID" })
   @ApiBody({ type: UpdateUserDto, description: "User update data" })
   @ApiResponse({ status: 200, description: "User updated successfully." })
-  @ApiResponse({ status: 403, description: "Forbidden. Cannot edit yourself through this endpoint." })
+  @ApiResponse({
+    status: 403,
+    description: "Forbidden. Cannot edit yourself through this endpoint.",
+  })
   async update(
     @Param("id", ParseIntPipe) id: number,
     @Body() updateUserDto: UpdateUserDto,
@@ -154,7 +155,6 @@ export class UsersController {
   ) {
     return this.usersService.update(id, updateUserDto, currentUserId);
   }
-
 
   @Patch("me")
   @ApiOperation({
@@ -179,9 +179,12 @@ export class UsersController {
     @GetCurrentUser("id") currentUserId: number,
     @Body() dto: UpdateUserDto
   ) {
-    return this.usersService.updateOwnProfile(currentUserId, dto, currentUserId);
+    return this.usersService.updateOwnProfile(
+      currentUserId,
+      dto,
+      currentUserId
+    );
   }
-
 
   @Delete(":id")
   @Roles(UserRole.admin, UserRole.superadmin)
@@ -197,7 +200,6 @@ export class UsersController {
   ) {
     return this.usersService.remove(id, currentUserId);
   }
-
 
   @Delete()
   @Roles(UserRole.admin, UserRole.superadmin)
