@@ -1,4 +1,5 @@
-import { PartialType, OmitType } from "@nestjs/swagger";
+import { PartialType, OmitType, ApiPropertyOptional } from "@nestjs/swagger";
+import { IsOptional, IsEmail, IsBoolean } from "class-validator";
 import { CreateUserDto } from "./create-user.dto";
 
 export class UpdateUserDto extends PartialType(
@@ -9,6 +10,13 @@ export class UpdateUserDto extends PartialType(
     "isActive",
   ] as const)
 ) {
+  @ApiPropertyOptional()
+  @IsEmail()
+  @IsOptional()
   email?: string;
+
+  @ApiPropertyOptional()
+  @IsBoolean()
+  @IsOptional()
   isActive?: boolean;
 }
