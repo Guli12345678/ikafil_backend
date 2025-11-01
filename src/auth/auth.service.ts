@@ -14,7 +14,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { MailService } from "../mail/mail.service";
 import { CreateUserDto } from "../users/dto/create-user.dto";
 import { SignInDto } from "../users/dto/sign-in.dto";
-import uuid from "uuid";
+import { v4 as uuidv4 } from "uuid";
 
 @Injectable()
 export class AuthService {
@@ -30,7 +30,7 @@ export class AuthService {
     const existing = await this.usersService.findByEmailOrPhone(dto.email);
     if (existing) throw new BadRequestException("Email already registered");
 
-    const activationLink = uuid.v4();
+    const activationLink = uuidv4();
     await this.mail.sendMail(dto.email, activationLink);
     const user = await this.usersService.createUser(dto, activationLink);
     return { message: "User registered successfully", userId: user.id };
@@ -51,7 +51,6 @@ export class AuthService {
 
   async signIn(dto: SignInDto, res: Response, admin?: boolean) {
     const user = await this.usersService.findByEmailOrPhone(dto.email);
-    console.log(user)
     if (!user) throw new UnauthorizedException("Invalid credentials");
 
     if (admin && user.role !== "admin" && user.role !== "superadmin") {
@@ -70,6 +69,8 @@ export class AuthService {
 
     res.cookie("refreshToken", tokens.refreshToken, {
       httpOnly: true,
+      sameSite: "strict",
+      secure: this.config.get("NODE_ENV") === "production",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -124,7 +125,7 @@ export class AuthService {
     const user = await this.usersService.findByEmailOrPhone(email);
     if (!user) throw new BadRequestException("User not found");
 
-    const token = uuid.v4();
+    const token = uuidv4();
     const resetLink = `https://ikafil.uz/auth/reset-password/${token}`;
 
     await this.prisma.users.update({

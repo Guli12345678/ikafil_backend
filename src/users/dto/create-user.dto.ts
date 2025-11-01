@@ -59,9 +59,9 @@ export class CreateUserDto {
     description: "The user's phone number (optional)",
     required: false,
   })
-  @IsNotEmpty()
+  @IsOptional()
   @IsString({ message: "Phone number must be a string" })
-  phone: string;
+  phone?: string;
 
   @ApiProperty({
     example: "myStrongPassword123",
