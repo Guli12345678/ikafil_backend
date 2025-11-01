@@ -110,6 +110,36 @@ export class UsersController {
     );
   }
 
+  @Patch("me")
+  @ApiOperation({
+    summary: "Update current user's own profile",
+    description:
+      "Allows a logged-in user to update their own information (name, phone, username).",
+  })
+  @ApiBody({
+    type: UpdateOwnProfileDto,
+    description:
+      "Only `full_name`, `phone`, or `username` can be updated by the user.",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "User profile updated successfully.",
+  })
+  @ApiResponse({
+    status: 403,
+    description: "Forbidden. You can only update your own profile.",
+  })
+  async updateOwnProfile(
+    @GetCurrentUser("id") currentUserId: number,
+    @Body() dto: UpdateOwnProfileDto
+  ) {
+    return this.usersService.updateOwnProfile(
+      currentUserId,
+      dto,
+      currentUserId
+    );
+  }
+
   @Get(":id")
   @ApiBearerAuth()
   @Roles(UserRole.admin, UserRole.superadmin, UserRole.support)
@@ -155,36 +185,6 @@ export class UsersController {
     @GetCurrentUser("id") currentUserId: number
   ) {
     return this.usersService.update(id, updateUserDto, currentUserId);
-  }
-
-  @Patch("me")
-  @ApiOperation({
-    summary: "Update current user's own profile",
-    description:
-      "Allows a logged-in user to update their own information (name, phone, username).",
-  })
-  @ApiBody({
-    type: UpdateOwnProfileDto,
-    description:
-      "Only `full_name`, `phone`, or `username` can be updated by the user.",
-  })
-  @ApiResponse({
-    status: 200,
-    description: "User profile updated successfully.",
-  })
-  @ApiResponse({
-    status: 403,
-    description: "Forbidden. You can only update your own profile.",
-  })
-  async updateOwnProfile(
-    @GetCurrentUser("id") currentUserId: number,
-    @Body() dto: UpdateOwnProfileDto
-  ) {
-    return this.usersService.updateOwnProfile(
-      currentUserId,
-      dto,
-      currentUserId
-    );
   }
 
   @Delete(":id")

@@ -18,4 +18,9 @@ export class UpdateOwnProfileDto {
   @IsString()
   @MinLength(3)
   username?: string;
+
+  @ApiPropertyOptional({ description: "User bio" })
+  @IsOptional()
+  @IsString()
+  bio?: string;
 }

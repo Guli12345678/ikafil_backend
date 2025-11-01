@@ -55,6 +55,15 @@ export class CreateUserDto {
   email: string;
 
   @ApiProperty({
+    example: "I love tech and gadgets.",
+    description: "Short user bio (optional)",
+    required: false,
+  })
+  @IsOptional()
+  @IsString({ message: "Bio must be a string" })
+  bio?: string;
+
+  @ApiProperty({
     example: "+1234567890",
     description: "The user's phone number (optional)",
     required: false,

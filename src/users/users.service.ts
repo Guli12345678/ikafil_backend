@@ -75,6 +75,7 @@ export class UsersService {
         email: dto.email,
         full_name: dto.full_name,
         phone: dto.phone || null,
+        bio: dto.bio || null,
         password: hashedPassword,
         role: dto.role || UserRole.buyer,
         activation_link: activationLink || null,
@@ -159,6 +160,7 @@ export class UsersService {
           full_name: true,
           email: true,
           phone: true,
+          bio: true,
           role: true,
           is_active: true,
           region_id: true,
@@ -241,6 +243,7 @@ export class UsersService {
         username: dto.username,
         full_name: dto.full_name,
         phone: dto.phone,
+        bio: dto.bio,
         role: dto.role,
         region_id: dto.region_id,
         is_active: dto.isActive,
@@ -304,6 +307,7 @@ export class UsersService {
 
     if (dto.full_name) dataToUpdate.full_name = dto.full_name;
     if (dto.phone) dataToUpdate.phone = dto.phone;
+    if (dto.bio) dataToUpdate.bio = dto.bio;
 
     if (dto.username) {
       const existing = await this.prisma.users.findFirst({

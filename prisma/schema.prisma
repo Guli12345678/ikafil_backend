@@ -70,6 +70,7 @@ model users {
   id              Int       @id @default(autoincrement())
   username        String    @unique
   phone           String?
+  bio             String?
   email           String    @unique
   full_name       String
   password        String
