@@ -44,8 +44,8 @@ export class DevicesController {
   constructor(private readonly devicesService: DevicesService) { }
 
   @Post()
-  @Roles(...adminRoles)
   @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(...adminRoles)
   @ApiBearerAuth()
   @UseInterceptors(FilesInterceptor("images"))
   @ApiOperation({ summary: "Create a new device (with optional images)" })
@@ -56,6 +56,7 @@ export class DevicesController {
   })
   @ApiResponse({ status: 201, description: "Device successfully created." })
   @ApiResponse({ status: 400, description: "Validation error." })
+  @ApiResponse({ status: 403, description: "Forbidden. Admin access required." })
   @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
   async create(
     @Body() createDeviceDto: any,
@@ -136,8 +137,8 @@ export class DevicesController {
   }
 
   @Put(":id")
-  @Roles(...adminRoles)
   @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(...adminRoles)
   @ApiBearerAuth()
   @UseInterceptors(FilesInterceptor("images"))
   @ApiOperation({ summary: "Update device (with optional new images)" })
@@ -149,6 +150,7 @@ export class DevicesController {
   })
   @ApiResponse({ status: 200, description: "Device successfully updated." })
   @ApiResponse({ status: 404, description: "Device not found." })
+  @ApiResponse({ status: 403, description: "Forbidden. Admin access required." })
   @UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
   async update(
     @Param("id", ParseIntPipe) id: number,
@@ -173,13 +175,14 @@ export class DevicesController {
   }
 
   @Delete(":id")
-  @Roles(...adminRoles)
   @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(...adminRoles)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Delete a device by ID" })
   @ApiParam({ name: "id", type: Number, example: 1 })
   @ApiResponse({ status: 200, description: "Device successfully deleted." })
   @ApiResponse({ status: 404, description: "Device not found." })
+  @ApiResponse({ status: 403, description: "Forbidden. Admin access required." })
   async remove(@Param("id", ParseIntPipe) id: number) {
     return this.devicesService.remove(id);
   }

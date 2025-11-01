@@ -22,15 +22,18 @@ import { CreateRegionDto } from "./dto/create-region.dto";
 import { UpdateRegionDto } from "./dto/update-region.dto";
 import { Roles } from "../common/decorators/roles";
 import { UserRole } from "@prisma/client";
+import { JwtAuthGuard } from "../common/guards/accessToken.guard";
+import { RolesGuard } from "../common/guards/role.guard";
 
 @ApiTags("Regions")
 @Controller("regions")
 export class RegionController {
   constructor(private readonly regionService: RegionService) { }
 
-  @ApiBearerAuth()
-  @Roles(UserRole.admin, UserRole.superadmin)
   @Post()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.admin, UserRole.superadmin)
+  @ApiBearerAuth()
   @ApiOperation({
     summary: "Create a new region",
     description: "Creates a new region in the system.",
@@ -38,6 +41,7 @@ export class RegionController {
   @ApiBody({ type: CreateRegionDto })
   @ApiResponse({ status: 201, description: "Region successfully created." })
   @ApiResponse({ status: 400, description: "Invalid input data." })
+  @ApiResponse({ status: 403, description: "Forbidden. Admin access required." })
   create(@Body() createRegionDto: CreateRegionDto) {
     return this.regionService.create(createRegionDto);
   }
@@ -55,8 +59,10 @@ export class RegionController {
     return this.regionService.findAll();
   }
 
-  @Roles(UserRole.admin, UserRole.superadmin)
   @Patch(":id")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.admin, UserRole.superadmin)
+  @ApiBearerAuth()
   @ApiOperation({
     summary: "Update region by ID",
     description: "Updates a region based on its ID.",
@@ -65,6 +71,7 @@ export class RegionController {
   @ApiBody({ type: UpdateRegionDto })
   @ApiResponse({ status: 200, description: "Region updated successfully." })
   @ApiResponse({ status: 404, description: "Region not found." })
+  @ApiResponse({ status: 403, description: "Forbidden. Admin access required." })
   update(
     @Param("id", ParseIntPipe) id: number,
     @Body() updateRegionDto: UpdateRegionDto
@@ -72,8 +79,10 @@ export class RegionController {
     return this.regionService.update(id, updateRegionDto);
   }
 
-  @Roles(UserRole.superadmin, UserRole.admin)
   @Delete(":id")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.superadmin, UserRole.admin)
+  @ApiBearerAuth()
   @ApiOperation({
     summary: "Delete region by ID",
     description: "Deletes a region from the system by its ID.",
@@ -81,6 +90,7 @@ export class RegionController {
   @ApiParam({ name: "id", type: Number })
   @ApiResponse({ status: 200, description: "Region deleted successfully." })
   @ApiResponse({ status: 404, description: "Region not found." })
+  @ApiResponse({ status: 403, description: "Forbidden. Admin access required." })
   remove(@Param("id", ParseIntPipe) id: number) {
     return this.regionService.remove(id);
   }

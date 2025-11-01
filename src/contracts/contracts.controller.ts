@@ -26,47 +26,48 @@ import { adminRoles } from "../types";
 import { RolesGuard } from "../common/guards/role.guard";
 
 @ApiTags("Contracts")
-@Roles(...adminRoles)
 @ApiBearerAuth()
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(...adminRoles)
 @Controller("contracts")
 export class ContractsController {
   constructor(private readonly contractsService: ContractsService) {}
 
   @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiOperation({ summary: "Create a new contract" })
   @ApiBody({ type: CreateContractDto })
   @ApiResponse({ status: 201, description: "Contract successfully created." })
   @ApiResponse({ status: 400, description: "Validation error." })
+  @ApiResponse({ status: 403, description: "Forbidden. Admin access required." })
   create(@Body() createContractDto: CreateContractDto) {
     return this.contractsService.create(createContractDto);
   }
 
   @Get()
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiOperation({ summary: "Get all contracts" })
   @ApiResponse({ status: 200, description: "List of contracts returned." })
+  @ApiResponse({ status: 403, description: "Forbidden. Admin access required." })
   findAll() {
     return this.contractsService.findAll();
   }
 
   @Get(":id")
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiOperation({ summary: "Get one contract by ID" })
   @ApiParam({ name: "id", type: Number })
   @ApiResponse({ status: 200, description: "Contract found." })
   @ApiResponse({ status: 404, description: "Contract not found." })
+  @ApiResponse({ status: 403, description: "Forbidden. Admin access required." })
   findOne(@Param("id", ParseIntPipe) id: number) {
     return this.contractsService.findOne(id);
   }
 
   @Patch(":id")
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiOperation({ summary: "Update contract by ID" })
   @ApiParam({ name: "id", type: Number })
   @ApiBody({ type: UpdateContractDto })
   @ApiResponse({ status: 200, description: "Contract successfully updated." })
   @ApiResponse({ status: 404, description: "Contract not found." })
+  @ApiResponse({ status: 403, description: "Forbidden. Admin access required." })
   update(
     @Param("id", ParseIntPipe) id: number,
     @Body() updateContractDto: UpdateContractDto
@@ -74,13 +75,12 @@ export class ContractsController {
     return this.contractsService.update(id, updateContractDto);
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Delete(":id")
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiOperation({ summary: "Delete contract by ID" })
   @ApiParam({ name: "id", type: Number })
   @ApiResponse({ status: 200, description: "Contract deleted successfully." })
   @ApiResponse({ status: 404, description: "Contract not found." })
+  @ApiResponse({ status: 403, description: "Forbidden. Admin access required." })
   remove(@Param("id", ParseIntPipe) id: number) {
     return this.contractsService.remove(id);
   }

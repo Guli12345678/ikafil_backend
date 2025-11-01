@@ -196,6 +196,13 @@ export class UsersService {
     const user = await this.prisma.users.findUnique({ where: { id } });
     if (!user) throw new NotFoundException("User not found");
 
+    // Prevent users from editing themselves through admin endpoint
+    if (currentUserId === id) {
+      throw new ForbiddenException(
+        "You cannot edit yourself through this endpoint. Use /users/me endpoint instead."
+      );
+    }
+
     if (currentUser.role === UserRole.admin) {
       if (user.role === UserRole.admin || user.role === UserRole.superadmin) {
         throw new ForbiddenException(
@@ -203,10 +210,10 @@ export class UsersService {
         );
       }
     } else if (currentUser.role === UserRole.superadmin) {
+      // Superadmin can update anyone
     } else {
-      if (currentUserId !== id) {
-        throw new ForbiddenException("You can update only your own account");
-      }
+      // This should not happen if guards are properly set, but safety check
+      throw new ForbiddenException("You do not have permission to update users");
     }
 
     if (dto.role && dto.role !== user.role) {

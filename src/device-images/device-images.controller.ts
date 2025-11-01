@@ -38,6 +38,8 @@ export class DeviceImagesController {
   constructor(private readonly deviceImagesService: DeviceImagesService) { }
 
   @Post()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(...adminRoles)
   @UseInterceptors(FileInterceptor("file"))
   @ApiConsumes("multipart/form-data")
   @ApiOperation({ summary: "Upload a new device image" })
@@ -53,6 +55,8 @@ export class DeviceImagesController {
       required: ["device_id", "file"],
     },
   })
+  @ApiResponse({ status: 201, description: "Image uploaded successfully." })
+  @ApiResponse({ status: 403, description: "Forbidden. Admin access required." })
   create(
     @UploadedFile() file: Express.Multer.File,
     @Body() dto: CreateDeviceImageDto
@@ -67,13 +71,14 @@ export class DeviceImagesController {
     return this.deviceImagesService.getDeviceImagesById(deviceId);
   }
 
-  @ApiBearerAuth()
-  @Roles(...adminRoles)
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Patch(":id")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(...adminRoles)
   @ApiOperation({ summary: "Update device image details" })
   @ApiParam({ name: "id", type: Number, required: true, example: 1 })
   @ApiBody({ type: UpdateDeviceImageDto })
+  @ApiResponse({ status: 200, description: "Image updated successfully." })
+  @ApiResponse({ status: 403, description: "Forbidden. Admin access required." })
   update(
     @Param("id", ParseIntPipe) id: number,
     @Body() dto: UpdateDeviceImageDto
@@ -81,12 +86,13 @@ export class DeviceImagesController {
     return this.deviceImagesService.update(id, dto);
   }
 
-  @ApiBearerAuth()
-  @Roles(...adminRoles)
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Delete(":id")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(...adminRoles)
   @ApiOperation({ summary: "Delete device image by ID" })
   @ApiParam({ name: "id", type: Number, required: true, example: 1 })
+  @ApiResponse({ status: 200, description: "Image deleted successfully." })
+  @ApiResponse({ status: 403, description: "Forbidden. Admin access required." })
   remove(@Param("id", ParseIntPipe) id: number) {
     return this.deviceImagesService.remove(id);
   }

@@ -25,7 +25,6 @@ export class DeviceDetailsController {
   constructor(private readonly deviceDetailsService: DeviceDetailsService) { }
 
   @Get(":deviceId")
-  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: "Get device details by device ID" })
   @ApiParam({ name: "deviceId", type: Number, required: true, example: 1 })
   @ApiResponse({ status: 200, description: "Device details found." })
@@ -40,6 +39,7 @@ export class DeviceDetailsController {
 
   @Patch(":deviceId")
   @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: "Update or create device details by device ID" })
   @ApiParam({ name: "deviceId", type: Number, required: true, example: 1 })
   @ApiBody({ type: UpdateDeviceDetailDto })
@@ -48,6 +48,7 @@ export class DeviceDetailsController {
     description: "Device details updated or created.",
   })
   @ApiResponse({ status: 400, description: "Validation error." })
+  @ApiResponse({ status: 401, description: "Unauthorized. Authentication required." })
   update(
     @Param("deviceId", ParseIntPipe) deviceId: number,
     @Body() updateDeviceDetailDto: UpdateDeviceDetailDto

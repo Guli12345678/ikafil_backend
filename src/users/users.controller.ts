@@ -141,11 +141,12 @@ export class UsersController {
   @Roles(UserRole.admin, UserRole.superadmin)
   @ApiOperation({
     summary: "Update user by ID",
-    description: "Updates specific user data based on the provided ID.",
+    description: "Updates specific user data based on the provided ID. Users cannot edit themselves through this endpoint - use /me endpoint instead.",
   })
   @ApiParam({ name: "id", type: Number, description: "User ID" })
   @ApiBody({ type: UpdateUserDto, description: "User update data" })
   @ApiResponse({ status: 200, description: "User updated successfully." })
+  @ApiResponse({ status: 403, description: "Forbidden. Cannot edit yourself through this endpoint." })
   async update(
     @Param("id", ParseIntPipe) id: number,
     @Body() updateUserDto: UpdateUserDto,
