@@ -1,0 +1,225 @@
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  BadRequestException,
+  Query,
+  ParseIntPipe,
+  UseGuards,
+} from "@nestjs/common";
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiQuery,
+  ApiBody,
+  ApiBearerAuth,
+} from "@nestjs/swagger";
+import { UsersService } from "./users.service";
+import { CreateUserDto } from "./dto/create-user.dto";
+import { UpdateUserDto } from "./dto/update-user.dto";
+import { UserRole } from "@prisma/client";
+import { JwtAuthGuard } from "../common/guards/accessToken.guard";
+import { RolesGuard } from "../common/guards/role.guard";
+import { Roles } from "../common/decorators/roles";
+import { GetCurrentUser } from "../common/decorators/getCurrentUser";
+
+@ApiTags("Users")
+@ApiBearerAuth()
+@Controller("users")
+@UseGuards(JwtAuthGuard, RolesGuard)
+export class UsersController {
+  constructor(private readonly usersService: UsersService) { }
+
+
+  @Post()
+  @Roles(UserRole.admin, UserRole.superadmin)
+  @ApiOperation({
+    summary: "Create a new user",
+    description: "Creates a new user with provided information and role.",
+  })
+  @ApiBody({ type: CreateUserDto, description: "User creation payload" })
+  @ApiResponse({ status: 201, description: "User successfully created." })
+  @ApiResponse({
+    status: 400,
+    description: "Invalid data or duplicate email/phone.",
+  })
+  async create(
+    @Body() createUserDto: CreateUserDto,
+    @GetCurrentUser("id") currentUserId: number
+  ) {
+    const user = await this.usersService.createUser(
+      createUserDto,
+      undefined,
+      currentUserId
+    );
+    const {
+      password,
+      token,
+      activation_link,
+      otp_code,
+      otp_expire,
+      resetLink,
+      region_id,
+      ...safeUser
+    } = user;
+    return safeUser;
+  }
+
+
+  @Get()
+  @Roles(UserRole.admin, UserRole.superadmin, UserRole.support)
+  @ApiOperation({
+    summary: "Get all users (with pagination, search, role, and region filter)",
+    description:
+      "Retrieves paginated list of users. You can search by name/email, filter by role or region.",
+  })
+  @ApiQuery({ name: "page", required: false, type: Number, example: 1 })
+  @ApiQuery({ name: "limit", required: false, type: Number, example: 10 })
+  @ApiQuery({ name: "search", required: false, type: String })
+  @ApiQuery({ name: "role", required: false, enum: UserRole })
+  @ApiQuery({ name: "region", required: false, type: Number })
+  @ApiResponse({
+    status: 200,
+    description: "List of users retrieved successfully.",
+  })
+  async findAll(
+    @Query("page") page: string,
+    @Query("limit") limit: string,
+    @Query("search") search: string,
+    @Query("role") role: UserRole,
+    @Query("region") region: string,
+    @GetCurrentUser("id") currentUserId: number
+  ) {
+    const pageNumber = page ? parseInt(page, 10) : 1;
+    const limitNumber = limit ? parseInt(limit, 10) : 10;
+    const regionId = region ? parseInt(region, 10) : undefined;
+
+    return this.usersService.findAll(
+      pageNumber,
+      limitNumber,
+      search || "",
+      role,
+      currentUserId,
+      regionId
+    );
+  }
+
+
+  @Get(":id")
+  @Roles(UserRole.admin, UserRole.superadmin, UserRole.support)
+  @ApiOperation({
+    summary: "Get user by ID (safe response)",
+    description:
+      "Retrieves a single user by ID. Sensitive fields like password and tokens are excluded.",
+  })
+  @ApiParam({ name: "id", type: Number, description: "User ID" })
+  @ApiResponse({ status: 200, description: "User found successfully." })
+  @ApiResponse({ status: 404, description: "User not found." })
+  async findOne(@Param("id", ParseIntPipe) id: number) {
+    const user = await this.usersService.findById(id);
+    const {
+      password,
+      token,
+      activation_link,
+      otp_code,
+      otp_expire,
+      resetLink,
+      region_id,
+      ...safeUser
+    } = user;
+    return safeUser;
+  }
+
+
+  @Patch(":id")
+  @Roles(UserRole.admin, UserRole.superadmin)
+  @ApiOperation({
+    summary: "Update user by ID",
+    description: "Updates specific user data based on the provided ID.",
+  })
+  @ApiParam({ name: "id", type: Number, description: "User ID" })
+  @ApiBody({ type: UpdateUserDto, description: "User update data" })
+  @ApiResponse({ status: 200, description: "User updated successfully." })
+  async update(
+    @Param("id", ParseIntPipe) id: number,
+    @Body() updateUserDto: UpdateUserDto,
+    @GetCurrentUser("id") currentUserId: number
+  ) {
+    return this.usersService.update(id, updateUserDto, currentUserId);
+  }
+
+
+  @Patch("me")
+  @ApiOperation({
+    summary: "Update current user's own profile",
+    description:
+      "Allows a logged-in user to update their own information (name, phone, username).",
+  })
+  @ApiBody({
+    type: UpdateUserDto,
+    description:
+      "Only `full_name`, `phone`, or `username` can be updated by the user.",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "User profile updated successfully.",
+  })
+  @ApiResponse({
+    status: 403,
+    description: "Forbidden. You can only update your own profile.",
+  })
+  async updateOwnProfile(
+    @GetCurrentUser("id") currentUserId: number,
+    @Body() dto: UpdateUserDto
+  ) {
+    return this.usersService.updateOwnProfile(currentUserId, dto, currentUserId);
+  }
+
+
+  @Delete(":id")
+  @Roles(UserRole.admin, UserRole.superadmin)
+  @ApiOperation({
+    summary: "Delete a user by ID",
+    description: "Deletes a specific user from the database by ID.",
+  })
+  @ApiParam({ name: "id", type: Number, description: "User ID" })
+  @ApiResponse({ status: 200, description: "User deleted successfully." })
+  async remove(
+    @Param("id", ParseIntPipe) id: number,
+    @GetCurrentUser("id") currentUserId: number
+  ) {
+    return this.usersService.remove(id, currentUserId);
+  }
+
+
+  @Delete()
+  @Roles(UserRole.admin, UserRole.superadmin)
+  @ApiOperation({
+    summary: "Delete multiple users (bulk delete)",
+    description: "Deletes multiple users at once by providing an array of IDs.",
+  })
+  @ApiBody({
+    schema: {
+      type: "object",
+      properties: {
+        ids: { type: "array", items: { type: "number" }, example: [1, 2, 3] },
+      },
+    },
+  })
+  @ApiResponse({ status: 200, description: "Users deleted successfully." })
+  async bulkRemove(
+    @Body("ids") ids: number[],
+    @GetCurrentUser("id") currentUserId: number
+  ) {
+    if (!Array.isArray(ids) || ids.length === 0) {
+      throw new BadRequestException("Please provide an array of user IDs");
+    }
+    return this.usersService.bulkRemove(ids, currentUserId);
+  }
+}

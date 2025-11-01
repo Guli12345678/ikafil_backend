@@ -1,0 +1,248 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  buyer
+  seller
+  support
+  admin
+  superadmin
+}
+
+enum DeviceType {
+  iphone
+  mac
+}
+
+enum SaleType {
+  trade_in
+  seller_sold
+  website_sold
+}
+
+enum ContractStatus {
+  active
+  completed
+  cancelled
+}
+
+enum PaymentMethod {
+  card
+  online
+  cash
+}
+
+enum PaymentStatus {
+  pending
+  paid
+  late
+  failed
+}
+
+enum ReceiveType {
+  pickup
+  delivery
+}
+
+enum DeviceSaleStatus {
+  available
+  sold
+}
+
+model region {
+  id         Int       @id @default(autoincrement())
+  name       String    @unique
+  created_at DateTime? @default(now())
+  updated_at DateTime? @updatedAt
+
+  users   users[]
+  devices devices[]
+  branch  branch[]
+}
+
+model users {
+  id              Int       @id @default(autoincrement())
+  username        String    @unique
+  phone           String?
+  email           String    @unique
+  full_name       String
+  password        String
+  token           String?
+  role            UserRole  @default(buyer)
+  is_active       Boolean?  @default(false)
+  activation_link String?
+  otp_code        String?
+  otp_expire      DateTime?
+  region_id       Int?
+  telegramId      BigInt?
+  resetLink       String?
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+
+  region           region?        @relation(fields: [region_id], references: [id])
+  devices          devices[]      @relation("UserDevices")
+  carts            carts[]
+  contracts_buyer  contracts[]    @relation("BuyerContracts")
+  contracts_admin  contracts[]    @relation("AdminContracts")
+  RevokedToken     RevokedToken[]
+  contracts_seller contracts[]    @relation("SellerContracts")
+}
+
+model installment_plans {
+  id                    Int       @id @default(autoincrement())
+  months                Int
+  percent               Decimal?  @default(0)
+  first_payment_percent Decimal?  @default(0)
+  created_at            DateTime? @default(now())
+
+  contracts contracts[]
+}
+
+model device_details {
+  id             Int       @id @default(autoincrement())
+  color          String?
+  year           Int?
+  cpu            String?
+  ram            String?
+  storage        String?
+  display_size   String?
+  battery_health String?
+  description    String?
+  created_at     DateTime? @default(now())
+  updated_at     DateTime? @updatedAt
+
+  device    devices @relation(fields: [device_id], references: [id])
+  device_id Int     @unique
+}
+
+model devices {
+  id           Int               @id @default(autoincrement())
+  name         String
+  type         DeviceType
+  sale_type    SaleType          @default(website_sold)
+  isTradible   Boolean?          @default(false)
+  seller_id    Int?
+  region_id    Int?
+  base_price   Decimal
+  status       DeviceSaleStatus? @default(available)
+  is_active    Boolean?          @default(true)
+  receive_type ReceiveType       @default(delivery)
+  branch_id    Int?
+  created_at   DateTime?         @default(now())
+  updated_at   DateTime?         @updatedAt
+
+  seller        users?          @relation("UserDevices", fields: [seller_id], references: [id])
+  region        region?         @relation(fields: [region_id], references: [id])
+  branch        branch?         @relation(fields: [branch_id], references: [id])
+  details       device_details?
+  device_images device_images[]
+  carts         carts[]
+  contracts     contracts[]
+}
+
+model device_images {
+  id         Int       @id @default(autoincrement())
+  device_id  Int
+  url        String
+  is_primary Boolean?  @default(false)
+  created_at DateTime? @default(now())
+
+  device devices @relation(fields: [device_id], references: [id])
+}
+
+model carts {
+  id        Int       @id @default(autoincrement())
+  user_id   Int
+  device_id Int
+  added_at  DateTime? @default(now())
+
+  user   users   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  device devices @relation(fields: [device_id], references: [id])
+
+  @@unique([user_id, device_id])
+}
+
+model RevokedToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  userId    Int?
+  user      users?   @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  @@index([expiresAt])
+}
+
+model contracts {
+  id                Int            @id @default(autoincrement())
+  contract_number   String?        @default(uuid())
+  buyer_id          Int?
+  device_id         Int
+  seller_id         Int?
+  admin_id          Int?
+  plan_id           Int?
+  total_price       Decimal
+  initial_payment   Decimal
+  monthly_payment   Decimal
+  duration_months   Int
+  remaining_balance Decimal
+  status            ContractStatus @default(active)
+  start_date        DateTime?      @default(now())
+  end_date          DateTime?
+  is_trade_in       Boolean?       @default(false)
+  trade_in_value    Decimal?       @default(0)
+  created_at        DateTime?      @default(now())
+  updated_at        DateTime?      @updatedAt
+
+  buyer            users?              @relation("BuyerContracts", fields: [buyer_id], references: [id], onDelete: SetNull)
+  seller           users?             @relation("SellerContracts", fields: [seller_id], references: [id], onDelete: SetNull)
+  admin            users?             @relation("AdminContracts", fields: [admin_id], references: [id])
+  device           devices            @relation(fields: [device_id], references: [id], onDelete: Cascade)
+  plan             installment_plans? @relation(fields: [plan_id], references: [id])
+  payment_schedule payment_schedule[]
+  payments         payments[]
+}
+
+model branch {
+  id         Int       @id @default(autoincrement())
+  location   String
+  latitude   Float
+  longitude  Float
+  regionId   Int
+  region     region    @relation(fields: [regionId], references: [id])
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  devices    devices[]
+}
+
+model payment_schedule {
+  id          Int           @id @default(autoincrement())
+  contract_id Int
+  due_date    DateTime
+  amount_due  Decimal
+  paid_amount Decimal?
+  status      PaymentStatus @default(pending)
+  created_at  DateTime?     @default(now())
+  updated_at  DateTime?     @updatedAt
+
+  contract contracts @relation(fields: [contract_id], references: [id])
+}
+
+model payments {
+  id           Int           @id @default(autoincrement())
+  contract_id  Int
+  amount       Decimal
+  payment_date DateTime?
+  method       PaymentMethod @default(cash)
+  status       PaymentStatus @default(paid)
+  created_at   DateTime?     @default(now())
+  updated_at   DateTime?     @updatedAt
+
+  contract contracts @relation(fields: [contract_id], references: [id])
+}
