@@ -11,6 +11,7 @@ import type { Response } from "express";
 import { AuthService } from "./auth.service";
 import { CreateUserDto } from "../users/dto/create-user.dto";
 import { SignInDto } from "../users/dto/sign-in.dto";
+import { ResetPasswordNoTokenDto } from "./dto/reset-password-no-token.dto";
 import { JwtAuthGuard } from "../common/guards/accessToken.guard";
 import { JwtRefresh } from "../common/guards/refreshToken.guard";
 import {
@@ -184,19 +185,12 @@ export class AuthController {
   @ApiOperation({
     summary: "Reset password without a token (directly via email/phone)",
   })
-  @ApiBody({
-    schema: {
-      example: {
-        newPassword: "newPassword123",
-        confirmNewPassword: "newPassword123",
-      },
-    },
-  })
+  @ApiBody({ type: ResetPasswordNoTokenDto })
   @ApiResponse({ status: 200, description: "Password reset successfully" })
   @ApiResponse({ status: 400, description: "Passwords do not match" })
   @ApiResponse({ status: 404, description: "User not found" })
   async resetPasswordWithoutToken(
-    @Body() body: { newPassword: string; confirmNewPassword: string },
+    @Body() body: ResetPasswordNoTokenDto,
     @GetCurrentUser("id") id: number
   ) {
     return this.authService.resetPasswordWithoutToken(

@@ -23,6 +23,7 @@ import {
 import { UsersService } from "./users.service";
 import { CreateUserDto } from "./dto/create-user.dto";
 import { UpdateUserDto } from "./dto/update-user.dto";
+import { UpdateOwnProfileDto } from "./dto/update-own-profile.dto";
 import { UserRole } from "@prisma/client";
 import { JwtAuthGuard } from "../common/guards/accessToken.guard";
 import { RolesGuard } from "../common/guards/role.guard";
@@ -163,7 +164,7 @@ export class UsersController {
       "Allows a logged-in user to update their own information (name, phone, username).",
   })
   @ApiBody({
-    type: UpdateUserDto,
+    type: UpdateOwnProfileDto,
     description:
       "Only `full_name`, `phone`, or `username` can be updated by the user.",
   })
@@ -177,7 +178,7 @@ export class UsersController {
   })
   async updateOwnProfile(
     @GetCurrentUser("id") currentUserId: number,
-    @Body() dto: UpdateUserDto
+    @Body() dto: UpdateOwnProfileDto
   ) {
     return this.usersService.updateOwnProfile(
       currentUserId,
