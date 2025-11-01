@@ -54,7 +54,6 @@ export class CreateUserDto {
   @IsEmail({}, { message: "Invalid email format" })
   email: string;
 
-
   @ApiProperty({
     example: "+1234567890",
     description: "The user's phone number (optional)",
@@ -100,6 +99,8 @@ export class CreateUserDto {
   @IsOptional()
   @IsEnum(UserRole, { message: "Invalid user role selected" })
   role?: UserRole;
+
+  isActive?: boolean;
 
   @ApiProperty({
     example: 1,
