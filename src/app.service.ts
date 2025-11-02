@@ -16,6 +16,7 @@ export class AppService implements OnModuleInit {
 
     const existingAdmin = await this.prisma.users.findUnique({
       where: { email: superAdminEmail },
+      select: { id: true },
     });
 
     if (!existingAdmin) {
