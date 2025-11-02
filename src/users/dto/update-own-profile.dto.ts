@@ -1,5 +1,6 @@
 import { ApiPropertyOptional } from "@nestjs/swagger";
-import { IsOptional, IsString, MinLength } from "class-validator";
+import { IsOptional, IsString, MinLength, IsBoolean, IsEnum } from "class-validator";
+import { UserRole } from "@prisma/client";
 
 export class UpdateOwnProfileDto {
   @ApiPropertyOptional({ description: "Full name" })
@@ -23,4 +24,14 @@ export class UpdateOwnProfileDto {
   @IsOptional()
   @IsString()
   bio?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
+
+  @ApiPropertyOptional({ enum: UserRole })
+  @IsOptional()
+  @IsEnum(UserRole)
+  role?: UserRole;
 }
