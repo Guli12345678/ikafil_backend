@@ -11,6 +11,7 @@ import * as bcrypt from "bcrypt";
 import { UserRole } from "@prisma/client";
 import { MailService } from "../mail/mail.service";
 import { v4 as uuid } from "uuid";
+import { UZBEKISTAN_REGIONS } from "../region/regions.data";
 
 @Injectable()
 export class UsersService {
@@ -42,10 +43,16 @@ export class UsersService {
     let username = dto.username;
     let password = dto.password;
 
-    const region = await this.prisma.region.findUnique({
-      where: { id: dto.region_id },
-    });
-    if (!region) throw new BadRequestException("Region not found");
+    if (dto.region_id) {
+      const region = await this.prisma.region.findUnique({
+        where: { id: dto.region_id },
+      });
+      if (!region) throw new BadRequestException("Region not found");
+    } else if (dto.region_name) {
+      if (!UZBEKISTAN_REGIONS.includes(dto.region_name)) {
+        throw new BadRequestException("Invalid region name");
+      }
+    }
 
     if (dto.role === UserRole.seller || dto.role === UserRole.admin) {
       username = `${dto.role}_${uuid().slice(0, 8)}`;
@@ -79,7 +86,7 @@ export class UsersService {
         password: hashedPassword,
         role: dto.role || UserRole.buyer,
         activation_link: activationLink || null,
-        region_id: dto.region_id,
+        region_id: dto.region_id ?? null,
         is_active: dto.isActive,
       },
     });
@@ -232,6 +239,11 @@ export class UsersService {
         where: { id: dto.region_id },
       });
       if (!region) throw new NotFoundException("Region not found");
+    }
+    if (dto.region_name) {
+      if (!UZBEKISTAN_REGIONS.includes(dto.region_name)) {
+        throw new BadRequestException("Invalid region name");
+      }
     }
 
     if (dto.username) {

@@ -8,14 +8,29 @@ export class MailService {
   private readonly transporter: nodemailer.Transporter;
 
   constructor(private readonly configService: ConfigService) {
+    const host =
+      this.configService.get<string>("SMTP_HOST") ||
+      this.configService.get<string>("smtp_host") ||
+      "smtp.gmail.com";
+    const portStr =
+      this.configService.get<string>("SMTP_PORT") ||
+      this.configService.get<string>("smtp_port") ||
+      "587";
+    const port = Number(portStr);
+    const user =
+      this.configService.get<string>("SMTP_USER") ||
+      this.configService.get<string>("smtp_user") ||
+      "";
+    const pass =
+      this.configService.get<string>("SMTP_PASS") ||
+      this.configService.get<string>("smtp_password") ||
+      "";
+
     this.transporter = nodemailer.createTransport({
-      host: this.configService.get<string>("SMTP_HOST"),
-      port: Number(this.configService.get<string>("SMTP_PORT")),
-      secure: false,
-      auth: {
-        user: this.configService.get<string>("SMTP_USER"),
-        pass: this.configService.get<string>("SMTP_PASS"),
-      },
+      host,
+      port,
+      secure: port === 465,
+      auth: user && pass ? { user, pass } : undefined,
     });
   }
 
@@ -32,12 +47,17 @@ export class MailService {
 
   /** ---------------- ACTIVATE ACCOUNT MAIL ---------------- */
   async sendMail(mail: string, activationLink: string): Promise<void> {
-    const NewactivationLink = `${this.configService.get<string>(
-      "APP_URL"
-    )}/api/auth/activate/${activationLink}`;
+    const appUrl =
+      this.configService.get<string>("APP_URL") ||
+      this.configService.get<string>("API_URL") ||
+      "http://localhost:3030";
+    const NewactivationLink = `${appUrl}/api/auth/activate/${activationLink}`;
 
     const mailOptions = {
-      from: this.configService.get<string>("SMTP_FROM"),
+      from:
+        this.configService.get<string>("SMTP_FROM") ||
+        this.configService.get<string>("smtp_user") ||
+        this.configService.get<string>("SMTP_USER"),
       to: mail!,
       subject: "Activate Your Account - IKafil",
       html: `
@@ -56,9 +76,11 @@ export class MailService {
 
   /** ---------------- RESET PASSWORD MAIL ---------------- */
   async sendResetMail(user: User): Promise<void> {
-    const resetLink = `${this.configService.get<string>(
-      "APP_URL"
-    )}/auth/reset-password/${user.resetLink}`;
+    const appUrl =
+      this.configService.get<string>("APP_URL") ||
+      this.configService.get<string>("API_URL") ||
+      "http://localhost:3030";
+    const resetLink = `${appUrl}/auth/reset-password/${user.resetLink}`;
 
     const mailOptions = {
       from: this.configService.get<string>("SMTP_FROM"),
@@ -98,7 +120,10 @@ export class MailService {
   }
   async sendNewCredentialsMail(user: User, newPassword: string): Promise<void> {
     const mailOptions = {
-      from: this.configService.get<string>("SMTP_FROM"),
+      from:
+        this.configService.get<string>("SMTP_FROM") ||
+        this.configService.get<string>("smtp_user") ||
+        this.configService.get<string>("SMTP_USER"),
       to: user.email!,
       subject: "Your New Login Credentials - IKafil",
       html: `

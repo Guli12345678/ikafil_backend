@@ -13,6 +13,7 @@ import {
   ValidatorConstraintInterface,
   ValidationArguments,
   IsNotEmpty,
+  IsBoolean,
 } from "class-validator";
 import { UserRole } from "@prisma/client";
 
@@ -109,13 +110,25 @@ export class CreateUserDto {
   @IsEnum(UserRole, { message: "Invalid user role selected" })
   role?: UserRole;
 
+  @IsOptional()
+  @IsBoolean()
   isActive?: boolean;
 
   @ApiProperty({
     example: 1,
-    description: "The user's assigned region ID",
+    description: "The user's assigned region ID (optional if region_name provided)",
   })
+  @IsOptional()
   @IsInt({ message: "Region ID must be an integer" })
   @IsPositive({ message: "Region ID must be a positive number" })
-  region_id: number;
+  region_id?: number;
+
+  @ApiProperty({
+    example: "Tashkent Region",
+    description: "The user's region name (optional if region_id provided)",
+    required: false,
+  })
+  @IsOptional()
+  @IsString({ message: "Region name must be a string" })
+  region_name?: string;
 }

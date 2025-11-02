@@ -81,6 +81,7 @@ model users {
   otp_code        String?
   otp_expire      DateTime?
   region_id       Int?
+  region_name     String?
   telegramId      BigInt?
   resetLink       String?
   created_at      DateTime  @default(now())
