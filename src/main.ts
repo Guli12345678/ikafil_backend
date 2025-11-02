@@ -24,26 +24,7 @@ async function bootstrap() {
     credentials: true,
   });
 
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      forbidUnknownValues: false,
-      transform: true,
-      stopAtFirstError: false,
-      exceptionFactory: (errors) => {
-        const formattedErrors = errors.map((err) => ({ 
-          field: err.property,
-          errors: Object.values(err.constraints || {}),
-        }));
-
-        return new BadRequestException({
-          message: "Validation failed",
-          errors: formattedErrors,
-        });
-      },
-    })
-  );
+  // Validation disabled per user request
 
   app.useGlobalFilters(new NotFoundFilter());
   const config = new DocumentBuilder()
