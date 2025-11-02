@@ -14,12 +14,14 @@ export class AppService implements OnModuleInit {
   async onModuleInit() {
     const superAdminEmail = "superadmin@example.com";
 
-    const existingAdmin = await this.prisma.users.findUnique({
-      where: { email: superAdminEmail },
-      select: { id: true },
-    });
+    const userCount = await this.prisma.users.count();
+    if (userCount === 0) {
+      const existingAdmin = await this.prisma.users.findUnique({
+        where: { email: superAdminEmail },
+        select: { id: true },
+      });
 
-    if (!existingAdmin) {
+      if (existingAdmin) return;
       const hashedPassword = await bcrypt.hash("SuperAdmin123!", 10);
       await this.prisma.users.create({
         data: {
