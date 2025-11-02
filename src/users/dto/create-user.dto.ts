@@ -16,6 +16,7 @@ import {
   IsBoolean,
 } from "class-validator";
 import { UserRole } from "@prisma/client";
+import { Expose } from "class-transformer";
 
 @ValidatorConstraint({ name: "PasswordsMatch", async: false })
 export class PasswordsMatch implements ValidatorConstraintInterface {
@@ -46,6 +47,7 @@ export class CreateUserDto {
     description: "The full name of the user",
   })
   @IsString({ message: "Full name must be a string" })
+  @Expose({ name: "fullName" })
   full_name: string;
 
   @ApiProperty({
@@ -98,6 +100,7 @@ export class CreateUserDto {
     message: "Confirm password must be at least 6 characters long",
   })
   @Validate(PasswordsMatch)
+  @Expose({ name: "confirm_password" })
   confirmPassword?: string;
 
   @ApiProperty({
@@ -112,6 +115,7 @@ export class CreateUserDto {
 
   @IsOptional()
   @IsBoolean()
+  @Expose({ name: "is_active" })
   isActive?: boolean;
 
   @ApiProperty({
@@ -130,5 +134,6 @@ export class CreateUserDto {
   })
   @IsOptional()
   @IsString({ message: "Region name must be a string" })
+  @Expose({ name: "regionName" })
   region_name?: string;
 }
