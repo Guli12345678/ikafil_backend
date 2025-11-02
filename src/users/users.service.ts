@@ -17,7 +17,7 @@ export class UsersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly mailService: MailService
-  ) { }
+  ) {}
 
   private async _checkSuperAdmin(currentUserId?: number) {
     if (!currentUserId)
@@ -80,10 +80,7 @@ export class UsersService {
         role: dto.role || UserRole.buyer,
         activation_link: activationLink || null,
         region_id: dto.region_id,
-        is_active:
-          dto.role === UserRole.seller || dto.role === UserRole.admin
-            ? true
-            : false,
+        is_active: dto.isActive,
       },
     });
 
@@ -106,7 +103,13 @@ export class UsersService {
   async findById(id: number) {
     const user = await this.prisma.users.findUnique({
       where: { id },
-      include: { region: { select: { name: true } }, devices: true, contracts_seller: true, contracts_buyer: { select: { payment_schedule: true } }, contracts_admin: { select: { payment_schedule: true } } },
+      include: {
+        region: { select: { name: true } },
+        devices: true,
+        contracts_seller: true,
+        contracts_buyer: { select: { payment_schedule: true } },
+        contracts_admin: { select: { payment_schedule: true } },
+      },
     });
     if (!user) throw new NotFoundException("User not found");
     return this._excludePassword(user);
@@ -215,7 +218,9 @@ export class UsersService {
       // Superadmin can update anyone
     } else {
       // This should not happen if guards are properly set, but safety check
-      throw new ForbiddenException("You do not have permission to update users");
+      throw new ForbiddenException(
+        "You do not have permission to update users"
+      );
     }
 
     if (dto.role && dto.role !== user.role) {
@@ -292,7 +297,11 @@ export class UsersService {
     return { deletedCount: existingUsers.length, status: "ok" };
   }
 
-  async updateOwnProfile(userId: number, dto: UpdateUserDto, currentUserId?: number) {
+  async updateOwnProfile(
+    userId: number,
+    dto: UpdateUserDto,
+    currentUserId?: number
+  ) {
     if (currentUserId && currentUserId !== userId) {
       throw new ForbiddenException("You can only update your own profile");
     }
@@ -317,7 +326,6 @@ export class UsersService {
       dataToUpdate.username = dto.username;
     }
 
-
     const updated = await this.prisma.users.update({
       where: { id: userId },
       data: dataToUpdate,
@@ -325,7 +333,6 @@ export class UsersService {
 
     return this._excludePassword(updated);
   }
-
 
   private _excludePassword(user: any) {
     const { password, ...rest } = user;
