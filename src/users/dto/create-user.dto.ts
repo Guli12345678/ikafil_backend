@@ -13,10 +13,8 @@ import {
   ValidatorConstraintInterface,
   ValidationArguments,
   IsNotEmpty,
-  IsBoolean,
 } from "class-validator";
 import { UserRole } from "@prisma/client";
-import { Expose } from "class-transformer";
 
 @ValidatorConstraint({ name: "PasswordsMatch", async: false })
 export class PasswordsMatch implements ValidatorConstraintInterface {
@@ -47,7 +45,6 @@ export class CreateUserDto {
     description: "The full name of the user",
   })
   @IsString({ message: "Full name must be a string" })
-  @Expose({ name: "fullName" })
   full_name: string;
 
   @ApiProperty({
@@ -100,7 +97,6 @@ export class CreateUserDto {
     message: "Confirm password must be at least 6 characters long",
   })
   @Validate(PasswordsMatch)
-  @Expose({ name: "confirm_password" })
   confirmPassword?: string;
 
   @ApiProperty({
@@ -113,27 +109,14 @@ export class CreateUserDto {
   @IsEnum(UserRole, { message: "Invalid user role selected" })
   role?: UserRole;
 
-  @IsOptional()
-  @IsBoolean()
-  @Expose({ name: "is_active" })
   isActive?: boolean;
 
   @ApiProperty({
     example: 1,
-    description: "The user's assigned region ID (optional if region_name provided)",
+    description: "The user's assigned region ID",
   })
-  @IsOptional()
   @IsInt({ message: "Region ID must be an integer" })
   @IsPositive({ message: "Region ID must be a positive number" })
-  region_id?: number;
+  region_id: number;
 
-  @ApiProperty({
-    example: "Tashkent Region",
-    description: "The user's region name (optional if region_id provided)",
-    required: false,
-  })
-  @IsOptional()
-  @IsString({ message: "Region name must be a string" })
-  @Expose({ name: "regionName" })
-  region_name?: string;
 }

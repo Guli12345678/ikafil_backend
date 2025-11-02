@@ -14,6 +14,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { MailService } from "../mail/mail.service";
 import { CreateUserDto } from "../users/dto/create-user.dto";
 import { SignInDto } from "../users/dto/sign-in.dto";
+import { v4 as uuid } from "uuid";
 
 @Injectable()
 export class AuthService {
@@ -25,16 +26,11 @@ export class AuthService {
     private readonly mail: MailService
   ) { }
 
-  private async uuidv4() {
-    const { v4 } = await import("uuid");
-    return v4();
-  }
-
   async register(dto: Omit<CreateUserDto, "role">) {
     const existing = await this.usersService.findByEmailOrPhone(dto.email);
     if (existing) throw new BadRequestException("Email already registered");
 
-    const activationLink = await this.uuidv4();
+    const activationLink = uuid();
     await this.mail.sendMail(dto.email, activationLink);
     const user = await this.usersService.createUser(dto, activationLink);
     return { message: "User registered successfully", userId: user.id };
@@ -129,7 +125,7 @@ export class AuthService {
     const user = await this.usersService.findByEmailOrPhone(email);
     if (!user) throw new BadRequestException("User not found");
 
-    const token = await this.uuidv4();
+    const token = uuid();
     const resetLink = `https://ikafil.uz/auth/reset-password/${token}`;
 
     await this.prisma.users.update({
